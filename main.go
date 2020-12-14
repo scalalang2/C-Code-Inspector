@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/fatih/color"
 	"log"
 	"os"
 	"os/exec"
@@ -14,24 +15,45 @@ import (
 var (
 	Names = make([]string, 1)
 	FailedList = make([]bool, 1)
+	RuntimeErrorList = make([]bool, 1)
+	OutputList = make([]string, 1)
 )
 
 func PrintList() {
 	realStudentSize := 0
+	bluePrint := color.New(color.FgBlue).PrintfFunc()
+	greenPrint := color.New(color.FgGreen).PrintfFunc()
 
 	for index, val := range Names {
 		if val != "" {
-			realStudentSize++
 			compile := "success"
 			if FailedList[index] {
 				compile = "failed"
 			}
 
-			fmt.Printf("filename: %s, compile: %s\n", val, compile)
+			runtime := "success"
+			if RuntimeErrorList[index] {
+				runtime = "failed"
+			}
+
+			fmt.Printf("filename: %s, compile: %s, runtime: %s\n", val, compile, runtime)
+			realStudentSize++
 		}
 	}
 
-	fmt.Printf("total student: %d", realStudentSize)
+	bluePrint("total student: %d\n\n", realStudentSize)
+	greenPrint("---- output ----\n\n")
+
+	realStudentSize = 0
+	for index, val := range Names {
+		if val != "" {
+			if !RuntimeErrorList[index] && !FailedList[index] {
+				greenPrint("[ filename: %s ]\n", val)
+				fmt.Printf("%s\n\n", OutputList[index])
+				realStudentSize++
+			}
+		}
+	}
 }
 
 func CheckError(err error, msg string) bool {
@@ -44,7 +66,7 @@ func CheckError(err error, msg string) bool {
 	return true
 }
 
-func ReadFiles(dir string, target string) {
+func ReadFiles(dir string, target string, inputFile string) {
 	i := 0
 	err := filepath.Walk(dir,
 		func(path string, info os.FileInfo, err error) error {
@@ -52,8 +74,8 @@ func ReadFiles(dir string, target string) {
 			if strings.Contains(name, target) {
 				// 파일 이름 추가
 				Names[i] = info.Name()
+				Evaluate(path, inputFile, i)
 				i++
-				Evaluate(path, "", i)
 			}
 			return nil
 		})
@@ -87,16 +109,30 @@ func Evaluate(path string, input string, index int) {
 	err = cmd.Run()
 	if err != nil  {
 		FailedList[index] = true
+		RuntimeErrorList[index] = true
 		return
 	}
+
+	if input == "" {
+		cmd = exec.Command(dir + "/tmp/main")
+	} else {
+		cmd = exec.Command(dir + "/tmp/main", "<", input)
+	}
+
+	out, err := cmd.Output()
+	if err != nil {
+		RuntimeErrorList[index] = true
+		return
+	}
+
+	OutputList[index] = string(out)
 }
 
 func main() {
 	// command line flags
 	dir := flag.String("d", "/Users/idohyeon/Downloads/practices/01", "directory")
 	studentSize := flag.String("s", "50", "student size")
-	inputFile := flag.String("i", "", "input file")
-	outputFile := flag.String("o", "", "output file")
+	inputFile := flag.String("i", "/Users/idohyeon/Downloads/practices/01/01_input.txt", "input file")
 	targetFiles := flag.String("t", "p1.c", "target files format")
 	flag.Parse()
 
@@ -105,10 +141,12 @@ func main() {
 
 	Names = make([]string, size)
 	FailedList = make([]bool, size)
+	RuntimeErrorList = make([]bool, size)
+	OutputList = make([]string, size)
 
-	fmt.Printf("Received dir: %q, input: %q, output: %q, targetFile: %q \n", *dir, *inputFile, *outputFile, *targetFiles)
+	fmt.Printf("Received dir: %q, input: %q, targetFile: %q \n", *dir, *inputFile, *targetFiles)
 
-	ReadFiles(*dir, *targetFiles)
+	ReadFiles(*dir, *targetFiles, *inputFile)
 
 	PrintList()
 }
