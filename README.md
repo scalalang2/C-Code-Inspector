@@ -7,5 +7,41 @@
 
 #### Usage
 ```shell script
-$ ./inspector -d <Directory> -f inspect.csv -t *p1.c
+$ git clone https://github.com/scalalang2/C-Code-Inspector
+$ cd ./C-Code-Inspector && make build
+$ ./bin/inspector
+
+Usage: 
+  -d string
+    	directory
+  -i string
+    	input file
+  -s string
+    	student size (default "50")
+  -t string
+    	target files format
+
+$ ./bin/inspector -d ./ -i input.txt -t p1.c
+dir: "./"
+students: "50"
+input: "input.txt"
+target: "p1.c"
+
+input:
+7 2
+
+filename: cp2_20200001_p1.c, compile: success, runtime: success
+filename: cp2_20160002_p1.c, compile: success, runtime: success
+filename: cp2_20180003_p1.c, compile: success, runtime: success
+total student: 3
+
+---- output ----
+[ filename: cp1_20200001_p1.c ]
+Input number: Result: 7
+
+[ filename: cp2_20160002_p1.c ]
+Input number: Result: 7
+
+[ filename: cp2_20180003_p1.c ]
+Input number:Result: 7
 ```

@@ -131,6 +131,7 @@ func main() {
 	CheckError(err, "student size receives only numbers.")
 
 	if *dir == "" && *targetFiles == "" {
+		fmt.Println("Usage: ")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
