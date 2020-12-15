@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"github.com/fatih/color"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -67,6 +69,15 @@ func CheckError(err error, msg string) bool {
 }
 
 func ReadFiles(dir string, target string, inputFile string) {
+	input := ""
+	if inputFile != "" {
+		currentDir, _ := os.Getwd()
+		bytes, _ := ioutil.ReadFile(currentDir + "/" + inputFile)
+		input = string(bytes)
+	}
+
+	fmt.Printf("input: \n%s\n", input)
+
 	i := 0
 	err := filepath.Walk(dir,
 		func(path string, info os.FileInfo, err error) error {
@@ -74,7 +85,7 @@ func ReadFiles(dir string, target string, inputFile string) {
 			if strings.Contains(name, target) {
 				// 파일 이름 추가
 				Names[i] = info.Name()
-				Evaluate(path, inputFile, i)
+				Evaluate(path, input, i)
 				i++
 			}
 			return nil
@@ -83,49 +94,29 @@ func ReadFiles(dir string, target string, inputFile string) {
 	CheckError(err, "err occurred while reading directories")
 }
 
-func CreateTempFolder() error {
-	dir, _ := os.Getwd()
-
-	if _, err := os.Stat(dir + "/tmp"); os.IsNotExist(err) {
-		err = os.Mkdir(dir + "/tmp", os.ModePerm)
-		if err != nil {
-			return err
-		}
-	} else {
-		return err
-	}
-
-	return nil
-}
-
 func Evaluate(path string, input string, index int) {
-	// create folder
-	err := CreateTempFolder()
-	CheckError(err, "failed to create temp folder")
-
 	// compile
 	dir, _ := os.Getwd()
-	cmd := exec.Command("gcc", path, "-o", dir + "/tmp/main")
-	err = cmd.Run()
+	cmd := exec.Command("gcc", path, "-o", dir + "/main")
+	err := cmd.Run()
 	if err != nil  {
 		FailedList[index] = true
 		RuntimeErrorList[index] = true
 		return
 	}
 
-	if input == "" {
-		cmd = exec.Command(dir + "/tmp/main")
-	} else {
-		cmd = exec.Command(dir + "/tmp/main", "<", input)
-	}
+	var out bytes.Buffer
+	cmd = exec.Command(dir + "/main")
+	cmd.Stdout = &out
+	cmd.Stdin = strings.NewReader(input)
 
-	out, err := cmd.Output()
+	err = cmd.Run()
 	if err != nil {
 		RuntimeErrorList[index] = true
 		return
 	}
 
-	OutputList[index] = string(out)
+	OutputList[index] = out.String()
 }
 
 func main() {
@@ -144,7 +135,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	notiPrint := color.New(color.FgWhite).Add(color.BgGreen).PrintfFunc()
+	notiPrint := color.New(color.FgHiRed).PrintfFunc()
 	Names = make([]string, size)
 	FailedList = make([]bool, size)
 	RuntimeErrorList = make([]bool, size)
