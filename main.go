@@ -130,21 +130,37 @@ func Evaluate(path string, input string, index int) {
 
 func main() {
 	// command line flags
-	dir := flag.String("d", "/Users/idohyeon/Downloads/practices/01", "directory")
+	dir := flag.String("d", "", "directory")
 	studentSize := flag.String("s", "50", "student size")
-	inputFile := flag.String("i", "/Users/idohyeon/Downloads/practices/01/01_input.txt", "input file")
-	targetFiles := flag.String("t", "p1.c", "target files format")
+	inputFile := flag.String("i", "", "input file")
+	targetFiles := flag.String("t", "", "target files format")
 	flag.Parse()
 
 	size, err := strconv.Atoi(*studentSize)
 	CheckError(err, "student size receives only numbers.")
 
+	if *dir == "" && *targetFiles == "" {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	notiPrint := color.New(color.FgWhite).Add(color.BgGreen).PrintfFunc()
 	Names = make([]string, size)
 	FailedList = make([]bool, size)
 	RuntimeErrorList = make([]bool, size)
 	OutputList = make([]string, size)
 
-	fmt.Printf("Received dir: %q, input: %q, targetFile: %q \n", *dir, *inputFile, *targetFiles)
+	fmt.Printf("dir: ")
+	notiPrint("%q\n", *dir)
+
+	fmt.Printf("students: ")
+	notiPrint("%q\n", *studentSize)
+
+	fmt.Printf("input: ")
+	notiPrint("%q\n", *inputFile)
+
+	fmt.Printf("target: ")
+	notiPrint("%q\n\n", *targetFiles)
 
 	ReadFiles(*dir, *targetFiles, *inputFile)
 
