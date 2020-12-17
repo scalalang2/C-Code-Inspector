@@ -5,6 +5,12 @@
 * C언어 코드 자동 컴파일 및 실행하기
 * 입력값 부여하기
 
+#### Requirements
+```shell script
+$ go version
+go version go1.13.4 darwin/amd64
+```
+
 #### Usage
 ```shell script
 $ git clone https://github.com/scalalang2/C-Code-Inspector
